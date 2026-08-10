@@ -1,0 +1,8 @@
+# Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+.venv/
+.env
+*.egg-info/
+.pytest_cache/
