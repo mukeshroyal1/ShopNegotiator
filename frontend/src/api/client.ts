@@ -73,6 +73,7 @@ export function getPurchaseOrders(): Promise<PurchaseOrder[]> {
 export type ShopifyStatus = {
   connected: boolean
   shop: { domain: string; scope: string; installedAt: string } | null
+  webhooks?: { address: string | null; configured: boolean }
 }
 
 export function getShopifyStatus(): Promise<ShopifyStatus> {
@@ -103,4 +104,12 @@ export function getShopifyLocations(): Promise<ShopifyLocation[]> {
 
 export function getShopifyOrders(): Promise<ShopifyOrder[]> {
   return request<ShopifyOrder[]>('/shopify/orders/')
+}
+
+export function registerShopifyWebhooks(): Promise<{
+  ok: boolean
+  address: string
+  topics: string[]
+}> {
+  return request('/shopify/webhooks/register/', { method: 'POST' })
 }

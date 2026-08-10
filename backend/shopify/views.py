@@ -13,14 +13,17 @@ from rest_framework.views import APIView
 
 from shopify.models import ShopifyShop
 from shopify.services import (
+    WEBHOOK_TOPICS,
     build_authorize_url,
     complete_oauth,
     ensure_shop_catalog_fresh,
     fetch_locations,
     fetch_orders,
     normalize_shop_domain,
+    register_webhooks,
     sync_products_from_shopify,
     verify_shopify_webhook,
+    webhook_callback_url,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,6 +54,10 @@ class ShopifyStatusView(APIView):
                     "domain": shop.shop_domain,
                     "scope": shop.scope,
                     "installedAt": shop.installed_at.isoformat(),
+                },
+                "webhooks": {
+                    "address": webhook_callback_url(),
+                    "configured": bool(webhook_callback_url()),
                 },
             }
         )
@@ -114,8 +121,39 @@ class ShopifyCallbackView(APIView):
         return HttpResponseRedirect(f"{frontend}/app?shopify=connected")
 
 
-class ShopifySyncView(APIView):
-    """Internal/manual fallback. Prefer webhooks + auto-refresh on product reads."""
+class ShopifyRegisterWebhooksView(APIView):
+    """Register product/inventory webhooks for the current shop (needs SHOPIFY_APP_URL)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        address = webhook_callback_url()
+        if not address:
+            return Response(
+                {
+                    "detail": (
+                        "SHOPIFY_APP_URL is not set to a public HTTPS origin on the server."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        shop = ShopifyShop.objects.filter(
+            user_id=request.user.id, is_active=True
+        ).first()
+        if not shop:
+            return Response(
+                {"detail": "No Shopify store connected."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            register_webhooks(shop)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Webhook registration failed")
+            return Response(
+                {"detail": f"Could not register webhooks: {exc}"},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        return Response({"ok": True, "address": address, "topics": list(WEBHOOK_TOPICS)})
 
     permission_classes = [IsAuthenticated]
 
