@@ -43,18 +43,45 @@ git clone https://github.com/<you>/BargainLabs.git
 
 4. After the API is live, **Reconnect Shopify** in Settings once so webhooks register (`products/*`, `inventory_levels/update`).
 
-## 3. Deploy frontend on Vercel
+## 3. Deploy on Vercel (frontend + API together)
 
-1. [Vercel](https://vercel.com) → Import this GitHub repo.
-2. **Root Directory:** `frontend`
-3. Framework: Vite (uses `frontend/vercel.json`)
-4. Environment variables:
+Vercel **Services** can host both apps on one project/domain.
+
+1. Ensure root `vercel.json` is present (defines `frontend` + `backend` services).
+2. Import the GitHub repo → Application Preset: **Services** → Root Directory: `./`
+3. Click **Refresh** after the file is on `main`, then **Deploy**.
+4. Set env vars (see below). Use your Vercel URL, e.g. `https://bargain-labs.vercel.app`:
+
+**Frontend**
 
 | Variable | Value |
 |----------|-------|
-| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_URL` | Supabase URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key |
-| `VITE_API_BASE` | `https://bargainlabs-api.onrender.com/api` |
+| `VITE_API_BASE` | `https://bargain-labs.vercel.app/api` |
+
+**Backend**
+
+| Variable | Value |
+|----------|-------|
+| `DJANGO_SECRET_KEY` | Generated secret |
+| `DJANGO_DEBUG` | `false` |
+| `DJANGO_ALLOWED_HOSTS` | `bargain-labs.vercel.app,.vercel.app` |
+| `DATABASE_URL` | Supabase session pooler URI |
+| `SUPABASE_URL` / `SUPABASE_JWT_SECRET` | From Supabase |
+| `CORS_ALLOWED_ORIGINS` | `https://bargain-labs.vercel.app` |
+| `FRONTEND_URL` | `https://bargain-labs.vercel.app` |
+| `SHOPIFY_API_KEY` / `SHOPIFY_API_SECRET` | Partner app |
+| `SHOPIFY_SCOPES` | (same as `.env.example`) |
+| `SHOPIFY_APP_URL` | `https://bargain-labs.vercel.app` |
+| `SHOPIFY_REDIRECT_URI` | `https://bargain-labs.vercel.app/api/shopify/callback/` |
+
+5. Shopify Partner app → App URL + Allowed redirection URL = those values.
+6. After deploy, **Reconnect Shopify** in Settings so webhooks register.
+
+### Alternative: frontend on Vercel, API on Render
+
+Use `render.yaml` if you prefer a dedicated always-on API. See older notes in git history / Render dashboard.
 
 ## Local development
 
