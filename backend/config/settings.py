@@ -8,16 +8,34 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-change-me")
-DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() == "true"
+
+def _env(name: str, default: str = "") -> str:
+    """Read env var; treat missing or blank as unset (Vercel sometimes stores empty strings)."""
+    value = os.getenv(name)
+    if value is None:
+        return default
+    value = value.strip()
+    return value if value else default
+
+
+SECRET_KEY = _env("DJANGO_SECRET_KEY", "dev-insecure-change-me")
+DEBUG = _env("DJANGO_DEBUG", "true").lower() == "true"
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    for host in _env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     if host.strip()
 ]
 # Convenience for Render / similar PaaS when host is passed via env as comma list.
 if os.getenv("RENDER_EXTERNAL_HOSTNAME"):
     ALLOWED_HOSTS.append(os.environ["RENDER_EXTERNAL_HOSTNAME"])
+# Vercel production / preview hosts
+if _env("VERCEL") == "1" or _env("VERCEL_ENV"):
+    if ".vercel.app" not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(".vercel.app")
+    # Deployment-specific hostname (no scheme), e.g. bargain-labs-xxx.vercel.app
+    vercel_url = _env("VERCEL_URL")
+    if vercel_url:
+        ALLOWED_HOSTS.append(vercel_url.split("/")[0])
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
@@ -84,9 +102,18 @@ def _database_from_url(url: str) -> dict:
     }
 
 
-database_url = os.getenv("DATABASE_URL", "")
+database_url = _env("DATABASE_URL", "")
 if database_url:
-    DATABASES = {"default": _database_from_url(database_url)}
+    try:
+        DATABASES = {"default": _database_from_url(database_url)}
+    except ValueError:
+        # Bad DATABASE_URL should not crash the whole serverless import.
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": BASE_DIR / "db.sqlite3",
+            }
+        }
 else:
     # Local bootstrap without Postgres — swap to DATABASE_URL for real data.
     DATABASES = {
@@ -108,31 +135,31 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
-    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+    for origin in _env("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
     if origin.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+SUPABASE_URL = _env("SUPABASE_URL", "")
+SUPABASE_JWT_SECRET = _env("SUPABASE_JWT_SECRET", "")
+SUPABASE_SERVICE_ROLE_KEY = _env("SUPABASE_SERVICE_ROLE_KEY", "")
 
-SHOPIFY_API_KEY = os.getenv("SHOPIFY_API_KEY", "")
-SHOPIFY_API_SECRET = os.getenv("SHOPIFY_API_SECRET", "")
-SHOPIFY_SCOPES = os.getenv(
+SHOPIFY_API_KEY = _env("SHOPIFY_API_KEY", "")
+SHOPIFY_API_SECRET = _env("SHOPIFY_API_SECRET", "")
+SHOPIFY_SCOPES = _env(
     "SHOPIFY_SCOPES",
     "write_draft_orders,write_inventory,read_inventory,read_locations,"
     "read_orders,write_orders,read_products,write_products",
 )
-SHOPIFY_API_VERSION = os.getenv("SHOPIFY_API_VERSION", "2024-10")
-SHOPIFY_REDIRECT_URI = os.getenv(
+SHOPIFY_API_VERSION = _env("SHOPIFY_API_VERSION", "2024-10")
+SHOPIFY_REDIRECT_URI = _env(
     "SHOPIFY_REDIRECT_URI",
     "http://localhost:8000/api/shopify/callback/",
 )
 # Public HTTPS origin for Shopify webhooks (e.g. https://xxxx.ngrok-free.app).
 # Localhost cannot receive webhooks; catalog still auto-refreshes when you open Products.
-SHOPIFY_APP_URL = os.getenv("SHOPIFY_APP_URL", "")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+SHOPIFY_APP_URL = _env("SHOPIFY_APP_URL", "")
+FRONTEND_URL = _env("FRONTEND_URL", "http://localhost:5173")
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [

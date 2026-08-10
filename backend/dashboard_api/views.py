@@ -254,4 +254,31 @@ class HealthView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        return Response({"ok": True, "service": "bargainlabs-api"})
+        import os
+
+        from django.conf import settings as dj_settings
+
+        # Presence only — never return secret values.
+        env_present = {
+            key: bool((os.getenv(key) or "").strip())
+            for key in (
+                "DATABASE_URL",
+                "DJANGO_SECRET_KEY",
+                "DJANGO_ALLOWED_HOSTS",
+                "SUPABASE_URL",
+                "SUPABASE_JWT_SECRET",
+                "SHOPIFY_API_KEY",
+                "SHOPIFY_API_SECRET",
+                "SHOPIFY_APP_URL",
+                "FRONTEND_URL",
+                "CORS_ALLOWED_ORIGINS",
+            )
+        }
+        return Response(
+            {
+                "ok": True,
+                "service": "bargainlabs-api",
+                "envPresent": env_present,
+                "allowedHostsCount": len(dj_settings.ALLOWED_HOSTS),
+            }
+        )
