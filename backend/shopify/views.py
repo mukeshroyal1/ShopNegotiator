@@ -155,6 +155,10 @@ class ShopifyRegisterWebhooksView(APIView):
             )
         return Response({"ok": True, "address": address, "topics": list(WEBHOOK_TOPICS)})
 
+
+class ShopifySyncView(APIView):
+    """Internal/manual fallback. Prefer webhooks + auto-refresh on product reads."""
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
