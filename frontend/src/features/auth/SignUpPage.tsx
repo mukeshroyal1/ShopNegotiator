@@ -31,7 +31,7 @@ export function SignUpPage() {
     setMessage(
       'Account created. If email confirmation is enabled in Supabase, check your inbox — otherwise you can sign in now.',
     )
-    navigate('/app/connect-shopify', { replace: true })
+    navigate('/app', { replace: true })
   }
 
   return (

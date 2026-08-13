@@ -1,37 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { AlertTriangle, Package } from 'lucide-react'
-import { getProducts } from '../api/client'
-import type { Product } from '../types/api'
+import { useLiveProducts } from '../hooks/useLiveProducts'
 
 export function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function run() {
-      try {
-        const data = await getProducts()
-        if (!cancelled) {
-          setProducts(data)
-          setError(null)
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load products')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    void run()
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const { products, loading, error } = useLiveProducts()
 
   const lowStockCount = useMemo(
     () => products.filter((p) => p.lowStock ?? p.currentStock <= p.threshold).length,
@@ -42,20 +14,32 @@ export function ProductsPage() {
     <div className="space-y-6 p-6 md:p-8">
       <div>
         <p className="text-sm text-muted-foreground">
-          Live catalog from your Shopify store — kept in sync automatically.
+          Live catalog from your Shopify store — updates here as inventory changes.
         </p>
-        {!loading && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {products.length} variants
-            {lowStockCount > 0 ? ` · ${lowStockCount} at or below threshold` : ''}
-          </p>
-        )}
+        <p className="mt-1 text-xs text-muted-foreground">
+          {loading
+            ? 'Loading…'
+            : `${products.length} variants${
+                lowStockCount > 0 ? ` · ${lowStockCount} at or below threshold` : ''
+              }`}
+        </p>
       </div>
 
-      {loading && <p className="text-sm text-muted-foreground">Loading products…</p>}
       {error && (
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {loading && (
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
+          <div className="animate-pulse space-y-0">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="border-b border-border px-4 py-4 last:border-0">
+                <div className="h-4 w-2/5 rounded bg-secondary" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

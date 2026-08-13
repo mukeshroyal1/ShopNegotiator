@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getDashboard } from '../../api/client'
+import { useRealtimeRefetch } from '../../hooks/useRealtimeRefetch'
 import type { Activity, DashboardStats, Negotiation } from '../../types/api'
 import { ActiveNegotiations } from './components/ActiveNegotiations'
 import { HeroBanner } from './components/HeroBanner'
@@ -21,38 +22,42 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      try {
-        const data = await getDashboard()
-        if (cancelled) return
-        setStats(data.stats)
-        setNegotiations(data.negotiations)
-        setActivities(data.activities)
-        setError(null)
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load dashboard')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    void load()
-    return () => {
-      cancelled = true
+  const load = useCallback(async () => {
+    try {
+      const data = await getDashboard()
+      setStats(data.stats)
+      setNegotiations(data.negotiations)
+      setActivities(data.activities)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+    } finally {
+      setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  useRealtimeRefetch(
+    useMemo(
+      () => [
+        { table: 'activities' },
+        { table: 'negotiations' },
+        { table: 'products' },
+      ],
+      [],
+    ),
+    load,
+  )
 
   return (
     <div className="space-y-6 p-6 md:p-8">
       <HeroBanner />
 
       {loading && (
-        <p className="text-sm text-muted-foreground">Loading your workspace…</p>
+        <p className="text-sm text-muted-foreground">Loading dashboard…</p>
       )}
 
       {error && (

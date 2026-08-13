@@ -32,7 +32,7 @@ export function PublicOnlyRoute() {
   }
 
   if (user) {
-    return <Navigate to="/app/connect-shopify" replace />
+    return <Navigate to="/app" replace />
   }
 
   return <Outlet />

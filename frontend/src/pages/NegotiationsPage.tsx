@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getNegotiations } from '../api/client'
 import { NegotiationCard } from '../features/dashboard/components/NegotiationCard'
+import { useRealtimeRefetch } from '../hooks/useRealtimeRefetch'
 import type { Negotiation } from '../types/api'
 
 export function NegotiationsPage() {
@@ -9,30 +10,26 @@ export function NegotiationsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      try {
-        const data = await getNegotiations()
-        if (!cancelled) {
-          setThreads(data)
-          setError(null)
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load negotiations')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    void load()
-    return () => {
-      cancelled = true
+  const load = useCallback(async () => {
+    try {
+      const data = await getNegotiations()
+      setThreads(data)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load negotiations')
+    } finally {
+      setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  useRealtimeRefetch(
+    useMemo(() => [{ table: 'negotiations' }], []),
+    load,
+  )
 
   return (
     <div className="space-y-6 p-6 md:p-8">

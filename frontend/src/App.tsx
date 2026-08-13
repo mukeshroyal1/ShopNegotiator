@@ -8,7 +8,7 @@ import { SignUpPage } from './features/auth/SignUpPage'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { HomePage } from './features/marketing/HomePage'
 import { ConnectShopifyPage } from './features/shopify/ConnectShopifyPage'
-import { ShopifyRequiredRoute } from './features/shopify/ShopifyRequiredRoute'
+import { ShopifyGateLayout } from './features/shopify/ShopifyRequiredRoute'
 import { AppLayout } from './layouts/AppLayout'
 import { NegotiationDetail } from './pages/NegotiationDetail'
 import { NegotiationsPage } from './pages/NegotiationsPage'
@@ -29,7 +29,7 @@ export default function App() {
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route element={<ShopifyRequiredRoute />}>
+          <Route element={<ShopifyGateLayout />}>
             <Route path="/app/connect-shopify" element={<ConnectShopifyPage />} />
 
             <Route path="/app" element={<AppLayout />}>

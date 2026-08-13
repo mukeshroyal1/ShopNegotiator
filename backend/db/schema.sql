@@ -278,3 +278,5 @@ create policy "purchase_orders_all_own" on public.purchase_orders
 drop policy if exists "activities_all_own" on public.activities;
 create policy "activities_all_own" on public.activities
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Live UI updates: also run db/realtime.sql to add tables to supabase_realtime.

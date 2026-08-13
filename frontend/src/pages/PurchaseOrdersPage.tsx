@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getPurchaseOrders, getShopifyOrders } from '../api/client'
+import { useRealtimeRefetch } from '../hooks/useRealtimeRefetch'
 import type { PurchaseOrder, ShopifyOrder } from '../types/api'
 
 export function PurchaseOrdersPage() {
@@ -9,42 +10,39 @@ export function PurchaseOrdersPage() {
   const [error, setError] = useState<string | null>(null)
   const [ordersWarning, setOrdersWarning] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      try {
-        const [purchaseOrders, shopifyResult] = await Promise.all([
-          getPurchaseOrders(),
-          getShopifyOrders()
-            .then((rows) => ({ orders: rows, warning: null as string | null }))
-            .catch((err: unknown) => ({
-              orders: [] as ShopifyOrder[],
-              warning:
-                err instanceof Error
-                  ? err.message
-                  : 'Could not load Shopify orders',
-            })),
-        ])
-        if (cancelled) return
-        setPos(purchaseOrders)
-        setOrders(shopifyResult.orders)
-        setOrdersWarning(shopifyResult.warning)
-        setError(null)
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load orders')
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    void load()
-    return () => {
-      cancelled = true
+  const load = useCallback(async () => {
+    try {
+      const [purchaseOrders, shopifyResult] = await Promise.all([
+        getPurchaseOrders(),
+        getShopifyOrders()
+          .then((rows) => ({ orders: rows, warning: null as string | null }))
+          .catch((err: unknown) => ({
+            orders: [] as ShopifyOrder[],
+            warning:
+              err instanceof Error
+                ? err.message
+                : 'Could not load Shopify orders',
+          })),
+      ])
+      setPos(purchaseOrders)
+      setOrders(shopifyResult.orders)
+      setOrdersWarning(shopifyResult.warning)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load orders')
+    } finally {
+      setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  useRealtimeRefetch(
+    useMemo(() => [{ table: 'purchase_orders' }], []),
+    load,
+  )
 
   return (
     <div className="space-y-8 p-6 md:p-8">

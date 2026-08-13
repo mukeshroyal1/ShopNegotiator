@@ -11,7 +11,7 @@ export function SignInPage() {
     (location.state as { from?: string } | null)?.from &&
     (location.state as { from: string }).from.startsWith('/app')
       ? (location.state as { from: string }).from
-      : '/app/connect-shopify'
+      : '/app'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

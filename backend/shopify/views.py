@@ -16,7 +16,6 @@ from shopify.services import (
     WEBHOOK_TOPICS,
     build_authorize_url,
     complete_oauth,
-    ensure_shop_catalog_fresh,
     fetch_locations,
     fetch_orders,
     normalize_shop_domain,

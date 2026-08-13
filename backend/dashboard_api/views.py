@@ -182,19 +182,9 @@ class NegotiationDetailView(APIView):
 class ProductListView(APIView):
     def get(self, request):
         from inventory.models import Product
-        from shopify.models import ShopifyShop
-        from shopify.services import ensure_shop_catalog_fresh
 
-        shop = ShopifyShop.objects.filter(
-            user_id=request.user.id, is_active=True
-        ).first()
-        if shop:
-            try:
-                ensure_shop_catalog_fresh(shop)
-            except Exception:  # noqa: BLE001
-                # Still return last known catalog if Shopify is briefly unavailable.
-                pass
-
+        # DB-only read path. Catalog freshness comes from Shopify webhooks
+        # (and optional Settings sync) — never block list GET on Admin API I/O.
         rows = Product.objects.filter(user_id=request.user.id).order_by("name")
         return Response(
             [

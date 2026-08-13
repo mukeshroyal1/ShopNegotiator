@@ -1,50 +1,61 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import {
   getShopifyLocations,
-  getShopifyStatus,
   registerShopifyWebhooks,
   startShopifyConnect,
-  type ShopifyStatus,
 } from '../api/client'
+import { useShopifyConnection } from '../features/shopify/ShopifyConnectionProvider'
 import type { ShopifyLocation } from '../types/api'
 
 export function SettingsPage() {
-  const [status, setStatus] = useState<ShopifyStatus | null>(null)
+  const {
+    connected,
+    shop,
+    webhooks,
+    initialLoading,
+    refresh: refreshShopify,
+  } = useShopifyConnection()
   const [locations, setLocations] = useState<ShopifyLocation[]>([])
   const [shopInput, setShopInput] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [locationsLoading, setLocationsLoading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    let cancelled = false
+    setShopInput(shop?.domain?.replace('.myshopify.com', '') ?? '')
+  }, [shop?.domain])
 
-    async function load() {
+  useEffect(() => {
+    if (!connected) {
+      setLocations([])
+      return
+    }
+
+    let cancelled = false
+    setLocationsLoading(true)
+
+    async function loadLocations() {
       try {
-        const shopify = await getShopifyStatus()
-        if (cancelled) return
-        setStatus(shopify)
-        setShopInput(shopify.shop?.domain?.replace('.myshopify.com', '') ?? '')
-        if (shopify.connected) {
-          const locs = await getShopifyLocations().catch(() => [])
-          if (!cancelled) setLocations(locs)
+        const locs = await getShopifyLocations()
+        if (!cancelled) {
+          setLocations(locs)
+          setError(null)
         }
-        setError(null)
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load settings')
+          setError(err instanceof Error ? err.message : 'Failed to load locations')
         }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setLocationsLoading(false)
       }
     }
 
-    void load()
+    void loadLocations()
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [connected])
 
   async function handleReconnect(event: FormEvent) {
     event.preventDefault()
@@ -52,8 +63,8 @@ export function SettingsPage() {
     setError(null)
     setMessage(null)
     try {
-      const shop = shopInput.trim() || status?.shop?.domain || ''
-      const { authorizeUrl } = await startShopifyConnect(shop)
+      const domain = shopInput.trim() || shop?.domain || ''
+      const { authorizeUrl } = await startShopifyConnect(domain)
       window.location.assign(authorizeUrl)
     } catch (err) {
       setBusy(false)
@@ -68,8 +79,7 @@ export function SettingsPage() {
     try {
       const result = await registerShopifyWebhooks()
       setMessage(`Live sync enabled → ${result.address}`)
-      const shopify = await getShopifyStatus()
-      setStatus(shopify)
+      await refreshShopify()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not enable webhooks')
     } finally {
@@ -77,14 +87,16 @@ export function SettingsPage() {
     }
   }
 
-  const scopes = (status?.shop?.scope || '')
+  const scopes = (shop?.scope || '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
 
+  const showShell = !initialLoading
+
   return (
     <div className="space-y-6 p-6 md:p-8">
-      {loading && <p className="text-sm text-muted-foreground">Loading settings…</p>}
+      {initialLoading && <p className="text-sm text-muted-foreground">Loading settings…</p>}
       {error && (
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
@@ -96,7 +108,7 @@ export function SettingsPage() {
         </div>
       )}
 
-      {!loading && (
+      {showShell && (
         <>
           <section className="rounded-xl border border-border bg-card p-6 shadow-soft">
             <h2 className="text-base font-semibold text-foreground">Shopify connection</h2>
@@ -105,23 +117,23 @@ export function SettingsPage() {
               to update scopes or switch stores.
             </p>
 
-            {status?.connected && status.shop ? (
+            {connected && shop ? (
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-muted-foreground">Store</dt>
-                  <dd className="font-medium text-foreground">{status.shop.domain}</dd>
+                  <dd className="font-medium text-foreground">{shop.domain}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Installed</dt>
                   <dd className="font-medium text-foreground">
-                    {new Date(status.shop.installedAt).toLocaleString()}
+                    {new Date(shop.installedAt).toLocaleString()}
                   </dd>
                 </div>
                 <div className="sm:col-span-2">
                   <dt className="text-muted-foreground">Live sync (webhooks)</dt>
                   <dd className="font-medium text-foreground">
-                    {status.webhooks?.configured
-                      ? status.webhooks.address
+                    {webhooks?.configured
+                      ? webhooks.address
                       : 'Not configured on server (set SHOPIFY_APP_URL)'}
                   </dd>
                 </div>
@@ -165,7 +177,7 @@ export function SettingsPage() {
               >
                 {busy ? 'Working…' : 'Reconnect Shopify'}
               </button>
-              {status?.connected && (
+              {connected && (
                 <button
                   type="button"
                   onClick={() => void handleRegisterWebhooks()}
@@ -183,7 +195,9 @@ export function SettingsPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               From Shopify (read_locations).
             </p>
-            {locations.length === 0 ? (
+            {locationsLoading ? (
+              <p className="mt-4 text-sm text-muted-foreground">Loading locations…</p>
+            ) : locations.length === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">
                 No locations loaded. Reconnect if this scope was just added.
               </p>

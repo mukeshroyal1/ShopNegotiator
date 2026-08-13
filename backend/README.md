@@ -4,7 +4,8 @@
 
 1. Open Supabase → SQL Editor
 2. Paste and run `db/schema.sql`
-3. This creates per-user tables + Row Level Security
+3. Paste and run `db/realtime.sql` (adds tables to `supabase_realtime` so the webapp live-updates)
+4. This creates per-user tables + Row Level Security + Realtime publication
 
 ## 2. Configure env
 

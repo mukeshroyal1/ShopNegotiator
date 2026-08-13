@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getNegotiation } from '../api/client'
 import { NegotiationCard } from '../features/dashboard/components/NegotiationCard'
+import { useRealtimeRefetch } from '../hooks/useRealtimeRefetch'
 import type { Negotiation } from '../types/api'
 
 export function NegotiationDetail() {
@@ -10,32 +11,37 @@ export function NegotiationDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      if (!id) return
-      try {
-        const data = await getNegotiation(id)
-        if (!cancelled) {
-          setNegotiation(data)
-          setError(null)
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load negotiation')
-          setNegotiation(null)
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    void load()
-    return () => {
-      cancelled = true
+  const load = useCallback(async () => {
+    if (!id) return
+    try {
+      const data = await getNegotiation(id)
+      setNegotiation(data)
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load negotiation')
+      setNegotiation(null)
+    } finally {
+      setLoading(false)
     }
   }, [id])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const liveTables = useMemo(
+    () =>
+      id
+        ? [
+            { table: 'negotiations', filter: `id=eq.${id}` },
+            { table: 'messages', filter: `negotiation_id=eq.${id}` },
+            { table: 'quotes', filter: `negotiation_id=eq.${id}` },
+          ]
+        : [],
+    [id],
+  )
+
+  useRealtimeRefetch(liveTables, load, { enabled: Boolean(id) })
 
   return (
     <div className="space-y-6 p-6 md:p-8">
