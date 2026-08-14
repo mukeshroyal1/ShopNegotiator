@@ -4,9 +4,9 @@ import {
   getInventoryAlerts,
   getSuppliers,
   startNegotiation,
-} from '../api/client'
-import { useRealtimeRefetch } from '../hooks/useRealtimeRefetch'
-import type { InventoryAlert, Supplier } from '../types/api'
+} from '../../api/client'
+import { useRealtimeRefetch } from '../../hooks/useRealtimeRefetch'
+import type { InventoryAlert, Supplier } from '../../types/api'
 
 type LowStockAlertsProps = {
   compact?: boolean
