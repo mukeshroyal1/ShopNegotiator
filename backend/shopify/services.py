@@ -278,17 +278,14 @@ def sync_products_from_shopify(
         except Exception:  # noqa: BLE001
             pass
 
+    try:
+        from inventory.services import sync_inventory_alerts_for_user
+
+        sync_inventory_alerts_for_user(user_id)
+    except Exception:  # noqa: BLE001
+        pass
+
     return count
-
-
-def ensure_shop_catalog_fresh(
-    shop: ShopifyShop, *, max_age_seconds: int = 90
-) -> int | None:
-    """Re-pull catalog if the last sync is older than max_age_seconds. Returns synced count or None if skipped."""
-    age = (timezone.now() - shop.updated_at).total_seconds()
-    if age < max_age_seconds:
-        return None
-    return sync_products_from_shopify(shop, record_activity=False)
 
 
 WEBHOOK_TOPICS = (

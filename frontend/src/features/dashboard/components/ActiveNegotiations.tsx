@@ -35,8 +35,7 @@ export function ActiveNegotiations({ negotiations }: ActiveNegotiationsProps) {
 
       {active.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
-          No active negotiations yet. When the agent starts talking to suppliers,
-          they will appear here.
+          No active negotiations yet. Start one from a low-stock alert on the dashboard.
         </div>
       ) : (
         <div className="space-y-4">

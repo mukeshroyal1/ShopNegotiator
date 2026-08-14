@@ -65,8 +65,46 @@ export type Product = {
 export type Supplier = {
   id: string
   name: string
+  contactName: string
+  phone: string
   email: string | null
-  alibabaListingId: string | null
+  defaultMoq: number
+  lastUnitPrice: number | null
+  currency: string
+  notes: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type SupplierInput = {
+  name: string
+  phone: string
+  contactName?: string
+  email?: string | null
+  defaultMoq?: number
+  lastUnitPrice?: number | null
+  currency?: string
+  notes?: string
+}
+
+export type InventoryAlert = {
+  id: string
+  productId: string
+  productName: string
+  sku: string
+  currentStock: number
+  threshold: number
+  status: 'open' | 'negotiating' | 'resolved' | 'failed'
+  createdAt: string
+  updatedAt: string
+}
+
+export type StartNegotiationResult = {
+  id: string
+  status: string
+  stage: string
+  product: string
+  supplier: string
 }
 
 export type PurchaseOrder = {

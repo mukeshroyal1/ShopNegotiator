@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { AlertTriangle, Package } from 'lucide-react'
+import { LowStockAlerts } from '../features/inventory/LowStockAlerts'
 import { useLiveProducts } from '../hooks/useLiveProducts'
 
 export function ProductsPage() {
@@ -31,6 +32,8 @@ export function ProductsPage() {
         </div>
       )}
 
+      {!loading && lowStockCount > 0 && <LowStockAlerts compact />}
+
       {loading && (
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-soft">
           <div className="animate-pulse space-y-0">
@@ -43,7 +46,7 @@ export function ProductsPage() {
         </div>
       )}
 
-      {!loading && !error && products.length === 0 && (
+      {!loading && products.length === 0 && (
         <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
           <Package className="mx-auto text-muted-foreground" size={28} />
           <p className="mt-3 text-sm font-medium text-foreground">No products yet</p>

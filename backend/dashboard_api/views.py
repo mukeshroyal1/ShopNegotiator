@@ -202,24 +202,6 @@ class ProductListView(APIView):
         )
 
 
-class SupplierListView(APIView):
-    def get(self, request):
-        from suppliers.models import Supplier
-
-        rows = Supplier.objects.filter(user_id=request.user.id).order_by("name")
-        return Response(
-            [
-                {
-                    "id": str(s.id),
-                    "name": s.name,
-                    "email": s.email,
-                    "alibabaListingId": s.alibaba_listing_id,
-                }
-                for s in rows
-            ]
-        )
-
-
 class PurchaseOrderListView(APIView):
     def get(self, request):
         rows = PurchaseOrder.objects.filter(user_id=request.user.id).order_by(

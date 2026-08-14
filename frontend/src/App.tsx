@@ -12,10 +12,10 @@ import { ShopifyGateLayout } from './features/shopify/ShopifyRequiredRoute'
 import { AppLayout } from './layouts/AppLayout'
 import { NegotiationDetail } from './pages/NegotiationDetail'
 import { NegotiationsPage } from './pages/NegotiationsPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { PurchaseOrdersPage } from './pages/PurchaseOrdersPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { SuppliersPage } from './pages/SuppliersPage'
 
 export default function App() {
   return (
@@ -35,27 +35,10 @@ export default function App() {
             <Route path="/app" element={<AppLayout />}>
               <Route index element={<DashboardPage />} />
               <Route path="products" element={<ProductsPage />} />
-              <Route
-                path="suppliers"
-                element={
-                  <PlaceholderPage
-                    title="Suppliers"
-                    description="Alibaba and preferred supplier profiles will live here."
-                  />
-                }
-              />
+              <Route path="suppliers" element={<SuppliersPage />} />
               <Route path="negotiations" element={<NegotiationsPage />} />
               <Route path="negotiations/:id" element={<NegotiationDetail />} />
               <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
-              <Route
-                path="analytics"
-                element={
-                  <PlaceholderPage
-                    title="Analytics"
-                    description="Savings and negotiation performance charts will live here."
-                  />
-                }
-              />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>

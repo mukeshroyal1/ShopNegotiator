@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
 import {
-  BarChart3,
   Boxes,
   ClipboardList,
   Handshake,
@@ -44,12 +43,6 @@ export const WORKSPACE_NAV: NavItem[] = [
     icon: ClipboardList,
     matchPrefix: `${APP_BASE}/purchase-orders`,
   },
-  {
-    label: 'Analytics',
-    to: `${APP_BASE}/analytics`,
-    icon: BarChart3,
-    matchPrefix: `${APP_BASE}/analytics`,
-  },
 ]
 
 export const ACCOUNT_NAV: NavItem[] = [
@@ -72,19 +65,15 @@ export const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   },
   [`${APP_BASE}/suppliers`]: {
     title: 'Suppliers',
-    subtitle: 'Browse and manage your supplier network.',
+    subtitle: 'Manual supplier contacts for voice negotiations.',
   },
   [`${APP_BASE}/negotiations`]: {
     title: 'Negotiations',
-    subtitle: 'Track active and completed AI negotiations.',
+    subtitle: 'Track active and completed supplier calls.',
   },
   [`${APP_BASE}/purchase-orders`]: {
     title: 'Purchase Orders',
     subtitle: 'Procurement POs and Shopify store orders.',
-  },
-  [`${APP_BASE}/analytics`]: {
-    title: 'Analytics',
-    subtitle: 'Insights into savings, outcomes, and performance.',
   },
   [`${APP_BASE}/settings`]: {
     title: 'Settings',

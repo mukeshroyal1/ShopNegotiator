@@ -7,6 +7,7 @@ import { HeroBanner } from './components/HeroBanner'
 import { RecentActivity } from './components/RecentActivity'
 import { StatsGrid } from './components/StatsGrid'
 import { buildStatCards } from './stats'
+import { LowStockAlerts } from '../inventory/LowStockAlerts'
 
 const emptyStats: DashboardStats = {
   activeNegotiations: 0,
@@ -46,6 +47,7 @@ export function DashboardPage() {
         { table: 'activities' },
         { table: 'negotiations' },
         { table: 'products' },
+        { table: 'inventory_alerts' },
       ],
       [],
     ),
@@ -69,6 +71,8 @@ export function DashboardPage() {
       {!loading && !error && (
         <>
           <StatsGrid stats={buildStatCards(stats)} />
+
+          <LowStockAlerts />
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">

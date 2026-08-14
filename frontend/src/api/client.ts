@@ -1,12 +1,15 @@
 import { supabase } from '../lib/supabase'
 import type {
   DashboardPayload,
+  InventoryAlert,
   Negotiation,
   Product,
   PurchaseOrder,
   ShopifyLocation,
   ShopifyOrder,
+  StartNegotiationResult,
   Supplier,
+  SupplierInput,
 } from '../types/api'
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000/api'
@@ -43,6 +46,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(detail)
   }
 
+  if (response.status === 204) {
+    return undefined as T
+  }
+
   return response.json() as Promise<T>
 }
 
@@ -64,6 +71,40 @@ export function getProducts(): Promise<Product[]> {
 
 export function getSuppliers(): Promise<Supplier[]> {
   return request<Supplier[]>('/suppliers/')
+}
+
+export function createSupplier(input: SupplierInput): Promise<Supplier> {
+  return request<Supplier>('/suppliers/', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateSupplier(id: string, input: Partial<SupplierInput>): Promise<Supplier> {
+  return request<Supplier>(`/suppliers/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteSupplier(id: string): Promise<void> {
+  return request<void>(`/suppliers/${id}/`, { method: 'DELETE' })
+}
+
+export function getInventoryAlerts(status = 'open'): Promise<InventoryAlert[]> {
+  return request<InventoryAlert[]>(
+    `/inventory-alerts/?status=${encodeURIComponent(status)}`,
+  )
+}
+
+export function startNegotiation(
+  alertId: string,
+  supplierId: string,
+): Promise<StartNegotiationResult> {
+  return request<StartNegotiationResult>('/negotiations/start/', {
+    method: 'POST',
+    body: JSON.stringify({ alertId, supplierId }),
+  })
 }
 
 export function getPurchaseOrders(): Promise<PurchaseOrder[]> {

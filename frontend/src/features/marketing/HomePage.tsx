@@ -51,12 +51,11 @@ export function HomePage() {
           <div className="relative mx-auto flex max-w-6xl flex-col px-6 py-20 md:py-28">
             <BrandMark size="lg" />
             <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-tight text-foreground md:text-5xl">
-              AI that negotiates supplier quotes for your store
+              AI that calls suppliers when your store runs low
             </h1>
             <p className="mt-4 max-w-2xl text-base text-muted-foreground md:text-lg">
-              Connect inventory signals, find suppliers, and let your agent
-              negotiate pricing — then approve the best quote from one
-              workspace.
+              Connect Shopify, add supplier contacts, and let your agent negotiate
+              by phone — with fair-price guidance from your own ML model.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -93,15 +92,15 @@ export function HomePage() {
           {[
             {
               title: 'Spot low stock early',
-              body: 'Pull live inventory from Shopify so sourcing starts before you sell out.',
+              body: 'Shopify webhooks keep inventory in sync and open alerts when stock hits your threshold.',
             },
             {
-              title: 'Negotiate automatically',
-              body: 'Your agent reaches out to suppliers, compares quotes, and tracks every thread.',
+              title: 'Call suppliers',
+              body: 'Add supplier phone numbers manually. Your agent will negotiate on a real phone call.',
             },
             {
-              title: 'Approve with confidence',
-              body: 'Review offers, lock in savings, and turn wins into purchase orders.',
+              title: 'Track every thread',
+              body: 'Review transcripts, quotes, and outcomes in one workspace.',
             },
           ].map((item) => (
             <article

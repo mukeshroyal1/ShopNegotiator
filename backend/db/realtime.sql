@@ -42,4 +42,16 @@ begin
   exception
     when duplicate_object then null;
   end;
+
+  begin
+    alter publication supabase_realtime add table public.suppliers;
+  exception
+    when duplicate_object then null;
+  end;
+
+  begin
+    alter publication supabase_realtime add table public.inventory_alerts;
+  exception
+    when duplicate_object then null;
+  end;
 end $$;

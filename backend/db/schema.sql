@@ -39,8 +39,12 @@ create table if not exists public.suppliers (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   name text not null,
+  contact_name text not null default '',
+  phone text not null default '',
   email text,
-  alibaba_listing_id text,
+  default_moq integer not null default 1,
+  last_unit_price numeric(12, 2),
+  currency text not null default 'USD',
   notes text not null default '',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -58,7 +62,7 @@ create table if not exists public.inventory_alerts (
   current_stock integer not null,
   threshold integer not null,
   status text not null default 'open'
-    check (status in ('open', 'searching', 'negotiating', 'resolved')),
+    check (status in ('open', 'negotiating', 'resolved', 'failed')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
