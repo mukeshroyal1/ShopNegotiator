@@ -10,21 +10,15 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.db_schema import suppliers_milestone1_ready
+from dashboard_api.negotiation_helpers import (
+    negotiation_name_maps,
+    serialize_negotiation,
+    supplier_name_map,
+)
 from negotiation.models import Activity, Negotiation
 from orders.models import PurchaseOrder
 from quotes.models import Quote
-
-
-def _money(value: Decimal | None, currency: str = "USD") -> str:
-    if value is None:
-        return f"{currency} 0.00"
-    return f"{currency} {value:.2f}"
-
-
-def _pct(value: Decimal | None) -> str:
-    if value is None:
-        return "0%"
-    return f"{value:.1f}%"
 
 
 def _relative_time(dt) -> str:
@@ -43,30 +37,6 @@ def _relative_time(dt) -> str:
         return f"{hours} hr ago"
     days = hours // 24
     return f"{days}d ago"
-
-
-def serialize_negotiation(n: Negotiation) -> dict:
-    currency = n.currency or "USD"
-    savings = None
-    if n.savings_pct is not None:
-        savings = _pct(n.savings_pct)
-    elif n.original_quote and n.current_offer and n.original_quote > 0:
-        savings = _pct(
-            ((n.original_quote - n.current_offer) / n.original_quote) * Decimal(100)
-        )
-
-    return {
-        "id": str(n.id),
-        "supplier": n.supplier.name if n.supplier_id else "Unknown supplier",
-        "product": n.product.name if n.product_id else "Unknown product",
-        "status": n.status,
-        "originalQuote": _money(n.original_quote, currency),
-        "currentOffer": _money(n.current_offer, currency),
-        "savings": savings or "—",
-        "stage": n.stage,
-        "progress": n.progress,
-        "updatedAt": _relative_time(n.updated_at),
-    }
 
 
 class DashboardView(APIView):
@@ -98,11 +68,15 @@ class DashboardView(APIView):
             user_id=user_id, savings_pct__isnull=False
         ).aggregate(avg=Avg("savings_pct"))["avg"]
 
+        negotiation_rows = list(
+            Negotiation.objects.filter(user_id=user_id).order_by("-updated_at")[:10]
+        )
+        supplier_names, product_names = negotiation_name_maps(negotiation_rows)
         negotiations = [
-            serialize_negotiation(n)
-            for n in Negotiation.objects.filter(user_id=user_id)
-            .select_related("product", "supplier")
-            .order_by("-updated_at")[:10]
+            serialize_negotiation(
+                n, supplier_names=supplier_names, product_names=product_names
+            )
+            for n in negotiation_rows
         ]
 
         activities = [
@@ -134,25 +108,32 @@ class DashboardView(APIView):
 class NegotiationListView(APIView):
     def get(self, request):
         user_id = request.user.id
-        rows = (
-            Negotiation.objects.filter(user_id=user_id)
-            .select_related("product", "supplier")
-            .order_by("-updated_at")
+        rows = list(
+            Negotiation.objects.filter(user_id=user_id).order_by("-updated_at")
         )
-        return Response([serialize_negotiation(n) for n in rows])
+        supplier_names, product_names = negotiation_name_maps(rows)
+        return Response(
+            [
+                serialize_negotiation(
+                    n, supplier_names=supplier_names, product_names=product_names
+                )
+                for n in rows
+            ]
+        )
 
 
 class NegotiationDetailView(APIView):
     def get(self, request, negotiation_id):
         user_id = request.user.id
         try:
-            n = Negotiation.objects.select_related("product", "supplier").get(
-                id=negotiation_id, user_id=user_id
-            )
+            n = Negotiation.objects.get(id=negotiation_id, user_id=user_id)
         except Negotiation.DoesNotExist:
             return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        payload = serialize_negotiation(n)
+        supplier_names, product_names = negotiation_name_maps([n])
+        payload = serialize_negotiation(
+            n, supplier_names=supplier_names, product_names=product_names
+        )
         payload["messages"] = [
             {
                 "id": str(m.id),
@@ -162,19 +143,31 @@ class NegotiationDetailView(APIView):
             }
             for m in n.messages.order_by("created_at")
         ]
+        quote_rows = list(
+            Quote.objects.filter(negotiation=n, user_id=user_id).only(
+                "id",
+                "supplier_id",
+                "unit_price",
+                "currency",
+                "moq",
+                "lead_time_days",
+                "is_selected",
+            )
+        )
+        quote_supplier_names = supplier_name_map(q.supplier_id for q in quote_rows)
         payload["quotes"] = [
             {
                 "id": str(q.id),
-                "supplierName": q.supplier.name if q.supplier_id else "Supplier",
+                "supplierName": quote_supplier_names.get(q.supplier_id, "Supplier")
+                if q.supplier_id
+                else "Supplier",
                 "unitPrice": float(q.unit_price),
                 "currency": q.currency,
                 "moq": q.moq,
                 "leadTimeDays": q.lead_time_days,
                 "isSelected": q.is_selected,
             }
-            for q in Quote.objects.filter(negotiation=n, user_id=user_id).select_related(
-                "supplier"
-            )
+            for q in quote_rows
         ]
         return Response(payload)
 
@@ -252,5 +245,6 @@ class HealthView(APIView):
                 "service": "bargainlabs-api",
                 "envPresent": env_present,
                 "allowedHostsCount": len(dj_settings.ALLOWED_HOSTS),
+                "schemaMilestone1": suppliers_milestone1_ready(),
             }
         )

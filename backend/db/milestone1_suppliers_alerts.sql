@@ -11,6 +11,8 @@ alter table public.suppliers add column if not exists currency text not null def
 alter table public.suppliers drop column if exists alibaba_listing_id;
 
 -- Inventory alert statuses for the call workflow
+update public.inventory_alerts set status = 'open' where status = 'searching';
+
 alter table public.inventory_alerts drop constraint if exists inventory_alerts_status_check;
 alter table public.inventory_alerts
   add constraint inventory_alerts_status_check

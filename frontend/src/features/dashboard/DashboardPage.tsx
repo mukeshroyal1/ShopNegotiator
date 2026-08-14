@@ -62,24 +62,26 @@ export function DashboardPage() {
         <p className="text-sm text-muted-foreground">Loading dashboard…</p>
       )}
 
-      {error && (
-        <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && (
+      {!loading && (
         <>
-          <StatsGrid stats={buildStatCards(stats)} />
+          {error && (
+            <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
+          {!error && <StatsGrid stats={buildStatCards(stats)} />}
 
           <LowStockAlerts />
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <ActiveNegotiations negotiations={negotiations} />
+          {!error && (
+            <div className="grid gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <ActiveNegotiations negotiations={negotiations} />
+              </div>
+              <RecentActivity activities={activities} />
             </div>
-            <RecentActivity activities={activities} />
-          </div>
+          )}
         </>
       )}
     </div>

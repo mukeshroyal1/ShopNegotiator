@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.db_schema import suppliers_milestone1_ready
 from inventory.models import InventoryAlert, Product
 from negotiation.models import Activity, Message, Negotiation
 from suppliers.models import Supplier
@@ -29,12 +30,22 @@ def serialize_supplier(s: Supplier) -> dict:
 
 
 def serialize_inventory_alert(alert: InventoryAlert) -> dict:
-    product = alert.product
+    product_name = "Unknown product"
+    sku = ""
+    if alert.product_id:
+        row = (
+            Product.objects.filter(id=alert.product_id)
+            .values_list("name", "sku")
+            .first()
+        )
+        if row:
+            product_name, sku = row[0], row[1] or ""
+
     return {
         "id": str(alert.id),
         "productId": str(alert.product_id),
-        "productName": product.name if product else "Unknown product",
-        "sku": product.sku if product else "",
+        "productName": product_name,
+        "sku": sku,
         "currentStock": alert.current_stock,
         "threshold": alert.threshold,
         "status": alert.status,
@@ -45,10 +56,30 @@ def serialize_inventory_alert(alert: InventoryAlert) -> dict:
 
 class SupplierListCreateView(APIView):
     def get(self, request):
+        if not suppliers_milestone1_ready():
+            return Response(
+                {
+                    "detail": (
+                        "Database needs Milestone 1 migration. "
+                        "Run backend/db/milestone1_suppliers_alerts.sql in Supabase."
+                    )
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
         rows = Supplier.objects.filter(user_id=request.user.id).order_by("name")
         return Response([serialize_supplier(s) for s in rows])
 
     def post(self, request):
+        if not suppliers_milestone1_ready():
+            return Response(
+                {
+                    "detail": (
+                        "Database needs Milestone 1 migration. "
+                        "Run backend/db/milestone1_suppliers_alerts.sql in Supabase."
+                    )
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
         name = (request.data.get("name") or "").strip()
         phone = (request.data.get("phone") or "").strip()
         if not name:
@@ -119,9 +150,7 @@ class SupplierDetailView(APIView):
 class InventoryAlertListView(APIView):
     def get(self, request):
         status_filter = (request.query_params.get("status") or "open").strip()
-        qs = InventoryAlert.objects.filter(user_id=request.user.id).select_related(
-            "product"
-        )
+        qs = InventoryAlert.objects.filter(user_id=request.user.id)
         if status_filter != "all":
             qs = qs.filter(status=status_filter)
         rows = qs.order_by("-created_at")
@@ -130,6 +159,17 @@ class InventoryAlertListView(APIView):
 
 class StartNegotiationView(APIView):
     def post(self, request):
+        if not suppliers_milestone1_ready():
+            return Response(
+                {
+                    "detail": (
+                        "Database needs Milestone 1 migration. "
+                        "Run backend/db/milestone1_suppliers_alerts.sql in Supabase."
+                    )
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
         alert_id = request.data.get("alertId")
         supplier_id = request.data.get("supplierId")
         if not alert_id or not supplier_id:
@@ -139,11 +179,15 @@ class StartNegotiationView(APIView):
             )
 
         try:
-            alert = InventoryAlert.objects.select_related("product").get(
-                id=alert_id, user_id=request.user.id
-            )
+            alert = InventoryAlert.objects.get(id=alert_id, user_id=request.user.id)
         except InventoryAlert.DoesNotExist:
             return Response({"detail": "Alert not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        product = (
+            Product.objects.filter(id=alert.product_id).only("name").first()
+            if alert.product_id
+            else None
+        )
 
         if alert.status not in ("open",):
             return Response(
@@ -157,7 +201,6 @@ class StartNegotiationView(APIView):
             return Response({"detail": "Supplier not found."}, status=status.HTTP_404_NOT_FOUND)
 
         now = timezone.now()
-        product = alert.product
         negotiation = Negotiation.objects.create(
             user_id=request.user.id,
             product_id=alert.product_id,
