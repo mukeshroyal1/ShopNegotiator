@@ -1,0 +1,15 @@
+[
+  "weight_oz",
+  "quantity",
+  "moq",
+  "lead_time_days",
+  "days_since_last_buy",
+  "last_unit_price",
+  "supplier_ask",
+  "sku_tier_mid",
+  "sku_tier_premium",
+  "supplier_tier_premium",
+  "supplier_tier_standard",
+  "region_MX",
+  "region_US"
+]

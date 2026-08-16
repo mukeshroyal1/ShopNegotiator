@@ -46,4 +46,9 @@ Authorization: Bearer <access_token>
 | PATCH/DELETE | `/api/suppliers/:id/` | Update / delete supplier |
 | GET | `/api/inventory-alerts/` | Low-stock alerts (`?status=open`) |
 | POST | `/api/negotiations/start/` | Start negotiation from alert + supplier |
+| POST | `/api/negotiations/:id/dry-run/` | Run LangGraph dry-run (needs agent service) |
+| POST | `/api/negotiations/:id/call/` | Start a real Twilio outbound call |
+| POST | `/api/twilio/voice/:id/` | TwiML: agent speaks + gather (`?token=`) |
+| POST | `/api/twilio/gather/:id/` | TwiML: supplier speech → next turn |
+| POST | `/api/twilio/status/:id/` | Twilio call status callbacks |
 | GET | `/api/purchase-orders/` | User POs |

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import supplier_views, views
+from . import internal_views, supplier_views, twilio_views, views
 
 urlpatterns = [
     path("health/", views.HealthView.as_view(), name="health"),
@@ -10,6 +10,16 @@ urlpatterns = [
         "negotiations/start/",
         supplier_views.StartNegotiationView.as_view(),
         name="negotiations-start",
+    ),
+    path(
+        "negotiations/<uuid:negotiation_id>/call/",
+        internal_views.NegotiationCallView.as_view(),
+        name="negotiation-call",
+    ),
+    path(
+        "negotiations/<uuid:negotiation_id>/dry-run/",
+        internal_views.NegotiationDryRunView.as_view(),
+        name="negotiation-dry-run",
     ),
     path(
         "negotiations/<uuid:negotiation_id>/",
@@ -32,5 +42,45 @@ urlpatterns = [
         "purchase-orders/",
         views.PurchaseOrderListView.as_view(),
         name="purchase-orders",
+    ),
+    path(
+        "twilio/voice/<uuid:negotiation_id>/",
+        twilio_views.TwilioVoiceView.as_view(),
+        name="twilio-voice",
+    ),
+    path(
+        "twilio/gather/<uuid:negotiation_id>/",
+        twilio_views.TwilioGatherView.as_view(),
+        name="twilio-gather",
+    ),
+    path(
+        "twilio/status/<uuid:negotiation_id>/",
+        twilio_views.TwilioStatusView.as_view(),
+        name="twilio-status",
+    ),
+    path(
+        "internal/negotiations/<uuid:negotiation_id>/context/",
+        internal_views.InternalNegotiationContextView.as_view(),
+        name="internal-negotiation-context",
+    ),
+    path(
+        "internal/negotiations/<uuid:negotiation_id>/messages/",
+        internal_views.InternalNegotiationMessageView.as_view(),
+        name="internal-negotiation-messages",
+    ),
+    path(
+        "internal/negotiations/<uuid:negotiation_id>/quotes/",
+        internal_views.InternalNegotiationQuoteView.as_view(),
+        name="internal-negotiation-quotes",
+    ),
+    path(
+        "internal/negotiations/<uuid:negotiation_id>/twilio-call/",
+        twilio_views.InternalTwilioCallView.as_view(),
+        name="internal-twilio-call",
+    ),
+    path(
+        "internal/negotiations/<uuid:negotiation_id>/",
+        internal_views.InternalNegotiationPatchView.as_view(),
+        name="internal-negotiation-patch",
     ),
 ]

@@ -237,6 +237,12 @@ class HealthView(APIView):
                 "SHOPIFY_APP_URL",
                 "FRONTEND_URL",
                 "CORS_ALLOWED_ORIGINS",
+                "AGENT_SERVICE_URL",
+                "AGENT_SERVICE_SECRET",
+                "TWILIO_ACCOUNT_SID",
+                "TWILIO_AUTH_TOKEN",
+                "TWILIO_FROM_NUMBER",
+                "TWILIO_WEBHOOK_BASE_URL",
             )
         }
         return Response(
@@ -246,5 +252,14 @@ class HealthView(APIView):
                 "envPresent": env_present,
                 "allowedHostsCount": len(dj_settings.ALLOWED_HOSTS),
                 "schemaMilestone1": suppliers_milestone1_ready(),
+                "agentConfigured": bool(
+                    dj_settings.AGENT_SERVICE_URL and dj_settings.AGENT_SERVICE_SECRET
+                ),
+                "twilioConfigured": bool(
+                    dj_settings.TWILIO_ACCOUNT_SID
+                    and dj_settings.TWILIO_AUTH_TOKEN
+                    and dj_settings.TWILIO_FROM_NUMBER
+                    and dj_settings.TWILIO_WEBHOOK_BASE_URL
+                ),
             }
         )

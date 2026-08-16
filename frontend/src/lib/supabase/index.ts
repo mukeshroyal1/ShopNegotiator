@@ -1,1 +1,1 @@
-export { createClient, isSupabaseConfigured, supabase } from './client'
+export { isSupabaseConfigured, supabase } from './client'

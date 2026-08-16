@@ -33,3 +33,6 @@
 npm-debug.log*
 .vercel
 .env*.local
+
+# ML local packs
+**/model.tar.gz

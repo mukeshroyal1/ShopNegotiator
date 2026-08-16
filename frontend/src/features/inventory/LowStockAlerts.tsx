@@ -84,14 +84,13 @@ export function LowStockAlerts({ compact = false }: LowStockAlertsProps) {
 
   return (
     <section className="space-y-3">
-      {!compact && (
-        <div>
-          <h2 className="text-base font-semibold text-foreground">Low-stock alerts</h2>
-          <p className="text-sm text-muted-foreground">
-            Pick a supplier and start a negotiation (voice calls come in Milestone 3).
-          </p>
-        </div>
-      )}
+      <div>
+        <h2 className="text-base font-semibold text-foreground">Low-stock alerts</h2>
+        <p className="text-sm text-muted-foreground">
+          Pick a supplier and click Start negotiation. Then call the supplier or
+          simulate with the LLM on the thread.
+        </p>
+      </div>
 
       {error && (
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">

@@ -107,6 +107,18 @@ export function startNegotiation(
   })
 }
 
+export function runNegotiationDryRun(
+  id: string,
+): Promise<{ ok: boolean; id: string; outcome?: string; stage?: string }> {
+  return request(`/negotiations/${id}/dry-run/`, { method: 'POST' })
+}
+
+export function startNegotiationCall(
+  id: string,
+): Promise<{ ok: boolean; id: string; callId?: string; stage?: string }> {
+  return request(`/negotiations/${id}/call/`, { method: 'POST' })
+}
+
 export function getPurchaseOrders(): Promise<PurchaseOrder[]> {
   return request<PurchaseOrder[]>('/purchase-orders/')
 }
@@ -127,15 +139,6 @@ export function startShopifyConnect(
   return request<{ authorizeUrl: string; shop: string }>('/shopify/connect/', {
     method: 'POST',
     body: JSON.stringify({ shop }),
-  })
-}
-
-export function syncShopifyProducts(): Promise<{
-  ok: boolean
-  productsSynced: number
-}> {
-  return request<{ ok: boolean; productsSynced: number }>('/shopify/sync/', {
-    method: 'POST',
   })
 }
 

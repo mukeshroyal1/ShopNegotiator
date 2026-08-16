@@ -36,6 +36,16 @@ if _env("VERCEL") == "1" or _env("VERCEL_ENV"):
     vercel_url = _env("VERCEL_URL")
     if vercel_url:
         ALLOWED_HOSTS.append(vercel_url.split("/")[0])
+# Twilio / ngrok webhook host (so voice callbacks are not DisallowedHost)
+_twilio_base = _env("TWILIO_WEBHOOK_BASE_URL", "")
+if _twilio_base:
+    _host = urlparse(_twilio_base).hostname
+    if _host and _host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_host)
+# Common ngrok suffixes for local Twilio testing
+for _suffix in (".ngrok-free.dev", ".ngrok-free.app", ".ngrok.io"):
+    if _suffix not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_suffix)
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
@@ -160,6 +170,18 @@ SHOPIFY_REDIRECT_URI = _env(
 # Localhost cannot receive webhooks; catalog still auto-refreshes when you open Products.
 SHOPIFY_APP_URL = _env("SHOPIFY_APP_URL", "")
 FRONTEND_URL = _env("FRONTEND_URL", "http://localhost:5173")
+
+# LangGraph agent (Milestone 2). Local default: http://127.0.0.1:8080
+AGENT_SERVICE_URL = _env("AGENT_SERVICE_URL", "")
+AGENT_SERVICE_SECRET = _env("AGENT_SERVICE_SECRET", "")
+
+# Twilio Programmable Voice (Milestone 3)
+TWILIO_ACCOUNT_SID = _env("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN = _env("TWILIO_AUTH_TOKEN", "")
+TWILIO_FROM_NUMBER = _env("TWILIO_FROM_NUMBER", "")
+# Public HTTPS base Twilio can reach (ngrok or deployed API). Not localhost.
+TWILIO_WEBHOOK_BASE_URL = _env("TWILIO_WEBHOOK_BASE_URL", "")
+TWILIO_WEBHOOK_SECRET = _env("TWILIO_WEBHOOK_SECRET", "")
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [

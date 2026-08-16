@@ -149,6 +149,13 @@ class SupplierDetailView(APIView):
 
 class InventoryAlertListView(APIView):
     def get(self, request):
+        from inventory.services import sync_inventory_alerts_for_user
+
+        try:
+            sync_inventory_alerts_for_user(request.user.id)
+        except Exception:  # noqa: BLE001
+            pass
+
         status_filter = (request.query_params.get("status") or "open").strip()
         qs = InventoryAlert.objects.filter(user_id=request.user.id)
         if status_filter != "all":
@@ -220,7 +227,8 @@ class StartNegotiationView(APIView):
             role="system",
             body=(
                 f"Negotiation queued for {product.name if product else 'product'} "
-                f"with {supplier.name}. Voice call will start in a later milestone."
+                f"with {supplier.name}. Open this thread and call the supplier "
+                "or run a dry-run simulation."
             ),
             created_at=now,
         )
